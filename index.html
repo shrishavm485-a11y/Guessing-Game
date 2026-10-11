@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NUMBER? — The Guessing Game</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="app">
+
+  <!-- 1. Welcome -->
+  <section class="screen" id="welcome">
+    <div class="sticker s1">★</div><div class="sticker s2">NEW!</div>
+    <h1 class="giant">NUMBER<span class="q">?</span></h1>
+    <p class="tagline">The guessing game where your wallet gives you away.</p>
+    <button class="btn yellow big" data-go="setup">Start game</button>
+  </section>
+
+  <!-- 2. Player setup -->
+  <section class="screen" id="setup" hidden>
+    <h2>Who's playing?</h2>
+    <label class="field"><span id="name1Label">Player 1 name</span><input id="name1" maxlength="14" placeholder="Player 1" autocomplete="off"></label>
+    <label class="field" id="name2Wrap">Player 2 name<input id="name2" maxlength="14" placeholder="Player 2" autocomplete="off"></label>
+    <div class="modes">
+      <button class="btn blue mode on" data-mode="pass">Pass and play<small>One device, take turns</small></button>
+      <button class="btn white mode" data-mode="friend">Play with a friend<small>Room code, two devices</small></button>
+    </div>
+    <div class="panel" id="online" hidden>
+      <button class="btn yellow big" id="createBtn">Create a room</button>
+      <p class="note">or join a friend's room</p>
+      <div class="row"><input id="joinCode" maxlength="5" placeholder="Room code" autocomplete="off" autocapitalize="characters"><button class="btn blue" id="joinBtn">Join room</button></div>
+      <p class="error" id="onErr" role="alert"></p>
+      <p class="note small">Rooms use PeerJS's free public matchmaking service to link your browsers directly. GitHub Pages only hosts the files. It needs internet on both devices and may fail on strict networks; pass and play always works.</p>
+    </div>
+    <button class="btn yellow big" id="toSecrets">Next: pick secrets</button>
+  </section>
+
+  <section class="screen" id="lobby" hidden>
+    <h2>Room is open</h2>
+    <p class="note">Send this code to your friend. They choose "Play with a friend" and enter it.</p>
+    <div class="panel big-q" id="roomCode"></div>
+    <button class="btn white" id="copyBtn">Copy invite</button>
+    <p class="note">Waiting for your friend to join…</p>
+    <button class="btn red" id="lobbyCancel">Cancel</button>
+  </section>
+
+  <section class="screen" id="wait" hidden>
+    <h2 id="waitTitle"></h2>
+    <p class="note" id="waitText"></p>
+    <div class="panel"><h3>History</h3><ol id="history2" class="history"></ol></div>
+    <button class="btn white" id="leaveBtn">Leave room</button>
+  </section>
+
+  <!-- 3. Secret number -->
+  <section class="screen" id="secret" hidden>
+    <h2 id="secretTitle"></h2>
+    <p class="note">Pick a whole number from 1 to 1000. Your opponent must not look.</p>
+    <input id="secretInput" class="bignum" type="password" inputmode="numeric" autocomplete="off" placeholder="???">
+    <p class="error" id="secretErr" role="alert"></p>
+    <button class="btn red big" id="lockSecret">Lock it in</button>
+  </section>
+
+  <!-- Pass the device -->
+  <section class="screen cover" id="pass" hidden>
+    <div class="sticker s1">✋</div>
+    <h2 id="passTitle"></h2>
+    <p id="passText" class="note"></p>
+    <button class="btn yellow big" id="passBtn"></button>
+  </section>
+
+  <!-- 4. Game -->
+  <section class="screen" id="game" hidden>
+    <h2 id="turnTitle"></h2>
+    <p class="note" id="turnSub"></p>
+    <div class="panel">
+      <h3>Pick a question</h3>
+      <div id="questions" class="qgrid"></div>
+      <details class="custom">
+        <summary>Write your own question</summary>
+        <div class="row">
+          <input id="cName" maxlength="24" placeholder="Item, e.g. a goat">
+          <input id="cPrice" type="number" min="1" max="1000" placeholder="Price ₹">
+          <button class="btn white" id="cAdd">Add</button>
+        </div>
+        <p class="error" id="cErr" role="alert"></p>
+      </details>
+      <p class="picked" id="picked">Nothing picked yet.</p>
+      <button class="btn blue big" id="askBtn" disabled>Ask the question</button>
+    </div>
+    <button class="btn red" id="toGuess">I know the number!</button>
+    <div class="panel">
+      <h3>History</h3>
+      <ol id="history" class="history"><li class="empty">No questions yet. Be brave.</li></ol>
+    </div>
+  </section>
+
+  <!-- Answer -->
+  <section class="screen" id="answer" hidden>
+    <h2 id="ansTitle"></h2>
+    <div class="panel big-q" id="ansQ"></div>
+    <p class="note">Your number is enough if it is at least the price. Answer honestly!</p>
+    <button class="btn white" id="peek">Hold to peek at my number</button>
+    <p class="peekout" id="peekOut"></p>
+    <div class="yn">
+      <button class="btn green big" data-ans="yes">YES</button>
+      <button class="btn red big" data-ans="no">NO</button>
+    </div>
+    <p class="error" id="ansErr" role="alert"></p>
+  </section>
+
+  <!-- 5. Guess -->
+  <section class="screen" id="guess" hidden>
+    <h2 id="guessTitle"></h2>
+    <p class="note">A wrong guess ends your turn. Choose wisely.</p>
+    <input id="guessInput" class="bignum" type="number" inputmode="numeric" min="1" max="1000" placeholder="1-1000">
+    <p class="error" id="guessErr" role="alert"></p>
+    <button class="btn red big" id="guessBtn">Guess it</button>
+    <button class="btn white" id="guessBack">Back to questions</button>
+  </section>
+
+  <!-- 6. Winner -->
+  <section class="screen" id="winner" hidden>
+    <div id="confetti" aria-hidden="true"></div>
+    <h2 class="giant small" id="winTitle">YOU WON!</h2>
+    <p class="winname" id="winName"></p>
+    <p class="note" id="winReveal"></p>
+    <button class="btn yellow big" id="again">Play again</button>
+  </section>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
